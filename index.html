@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Trading Journal Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --success: #27ae60; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; margin: 0; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* Summary Section */
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px; text-align: center; }
+        .stat-card h3 { margin: 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 22px; font-weight: bold; color: var(--primary); }
+
+        /* Form Section */
+        .input-box { background: #f9f9f9; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 20px; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+        input, select, button { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        
+        .btn { cursor: pointer; border: none; font-weight: bold; transition: 0.2s; color: white; padding: 10px 15px; }
+        .btn-save { background: var(--primary); }
+        .btn-action { background: #7f8c8d; margin: 0 5px; }
+        .btn-danger { background: var(--danger); margin-left: 10px; }
+        .btn:hover { opacity: 0.9; }
+
+        /* Table Section */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: var(--primary); color: white; }
+        .day-header { background: #ecf0f1 !important; font-weight: bold; text-align: left; }
+        .win-text { color: var(--success); font-weight: bold; }
+        .loss-text { color: var(--danger); font-weight: bold; }
+        .del-btn { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="text-align:center; color: var(--primary);">📊 Binary Trading Journal</h2>
+
+    <div class="summary-grid">
+        <div class="stat-card"><h3>Total Trades</h3><p id="sum-total">0</p></div>
+        <div class="stat-card"><h3>Wins / Losses</h3><p><span id="sum-wins" class="win-text">0</span> / <span id="sum-loss" class="loss-text">0</span></p></div>
+        <div class="stat-card"><h3>Net Profit</h3><p id="sum-net">$0.00</p></div>
+    </div>
+
+    <div style="text-align:center; margin-bottom: 20px;">
+        <button class="btn btn-action" onclick="downloadPDF()">Export PDF</button>
+        <button class="btn btn-action" onclick="exportJSON()">Backup JSON</button>
+        <button class="btn btn-action" onclick="document.getElementById('file-input').click()">Restore Data</button>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        <input type="file" id="file-input" style="display:none" onchange="importJSON(this)">
+    </div>
+
+    <div class="input-box">
+        <div class="input-grid">
+            <input type="date" id="t-date">
+            <input type="text" id="t-pair" placeholder="Pair (EUR/USD)">
+            <input type="number" id="t-amt" placeholder="Amount $">
+            <input type="number" id="t-perc" placeholder="Payout %">
+            <select id="t-res">
+                <option value="WIN">WIN</option>
+                <option value="MTG WIN">MTG WIN</option>
+                <option value="LOSS">LOSS</option>
+                <option value="OTM">OTM</option>
+            </select>
+            <button class="btn btn-save" onclick="addTrade()">Save Trade</button>
+        </div>
+    </div>
+
+    <table id="trade-table">
+        <thead>
+            <tr>
+                <th>Pair</th>
+                <th>Invested</th>
+                <th>Payout</th>
+                <th>Result</th>
+                <th>P&L</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+</div>
+
+<script>
+    // Aaj ki date set karein by default
+    document.getElementById('t-date').valueAsDate = new Date();
+
+    let trades = JSON.parse(localStorage.getItem('trading_v6_data')) || [];
+
+    function addTrade() {
+        const dateVal = document.getElementById('t-date').value;
+        const pairVal = document.getElementById('t-pair').value;
+        const amtVal = document.getElementById('t-amt').value;
+        const percVal = document.getElementById('t-perc').value;
+        const resVal = document.getElementById('t-res').value;
+
+        if(!dateVal || !pairVal || !amtVal || !percVal) {
+            alert("Meharbani karke tamam details bharein!");
+            return;
+        }
+
+        const amt = parseFloat(amtVal);
+        const perc = parseFloat(percVal);
+        
+        // P&L Logic: LOSS aur OTM dono negative balance create karenge
+        let pnl = (resVal === 'LOSS' || resVal === 'OTM') ? -amt : (amt * (perc / 100));
+
+        const newTrade = {
+            id: Date.now(),
+            date: dateVal,
+            pair: pairVal.toUpperCase(),
+            amount: amt,
+            payout: perc,
+            result: resVal,
+            pnl: pnl
+        };
+
+        trades.push(newTrade);
+        localStorage.setItem('trading_v6_data', JSON.stringify(trades));
+        
+        // Reset pair and amount only
+        document.getElementById('t-pair').value = '';
+        document.getElementById('t-amt').value = '';
+        
+        render();
+    }
+
+    function deleteTrade(id) {
+        if(confirm("Yeh trade delete kar dein?")) {
+            trades = trades.filter(t => t.id !== id);
+            localStorage.setItem('trading_v6_data', JSON.stringify(trades));
+            render();
+        }
+    }
+
+    function clearAllData() {
+        if(confirm("Kya aap saara record delete karna chahte hain?")) {
+            trades = [];
+            localStorage.removeItem('trading_v6_data');
+            render();
+        }
+    }
+
+    function render() {
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+        
+        trades.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let totalWins = 0, totalLoss = 0, netProfit = 0, lastDate = '';
+
+        trades.forEach(t => {
+            netProfit += t.pnl;
+            
+            // Stats logic: Sirf WIN aur MTG WIN ko wins mein count karein
+            if(t.result === 'WIN' || t.result === 'MTG WIN') {
+                totalWins++;
+            } else {
+                totalLoss++;
+            }
+
+            if (t.date !== lastDate) {
+                const dayRows = trades.filter(x => x.date === t.date);
+                const dayPnl = dayRows.reduce((s, x) => s + x.pnl, 0);
+                tbody.innerHTML += `
+                    <tr class="day-header">
+                        <td colspan="6">📅 Date: ${t.date} | Daily P&L: ${dayPnl >= 0 ? '+' : ''}$${dayPnl.toFixed(2)}</td>
+                    </tr>`;
+                lastDate = t.date;
+            }
+
+            // OTM ke liye bhi red color use hoga
+            const isLoss = (t.result === 'LOSS' || t.result === 'OTM');
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${t.pair}</td>
+                    <td>$${t.amount.toFixed(2)}</td>
+                    <td>${t.payout}%</td>
+                    <td class="${isLoss ? 'loss-text' : 'win-text'}">${t.result}</td>
+                    <td class="${t.pnl >= 0 ? 'win-text' : 'loss-text'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+                    <td><button class="del-btn" onclick="deleteTrade(${t.id})">Delete</button></td>
+                </tr>`;
+        });
+
+        document.getElementById('sum-total').innerText = trades.length;
+        document.getElementById('sum-wins').innerText = totalWins;
+        document.getElementById('sum-loss').innerText = totalLoss;
+        document.getElementById('sum-net').innerText = (netProfit >= 0 ? '+$' : '-$') + Math.abs(netProfit).toFixed(2);
+        document.getElementById('sum-net').className = netProfit >= 0 ? 'win-text' : 'loss-text';
+    }
+
+    // Export/Import
+    function exportJSON() {
+        const blob = new Blob([JSON.stringify(trades)], {type: "application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = "trading_backup.json"; a.click();
+    }
+
+    function importJSON(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            trades = JSON.parse(e.target.result);
+            localStorage.setItem('trading_v6_data', JSON.stringify(trades));
+            render();
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Trading Report", 14, 15);
+        doc.autoTable({ html: '#trade-table', startY: 25, theme: 'grid' });
+        doc.save("Trading_Report.pdf");
+    }
+
+    window.onload = render;
+</script>
+</body>
+</html>
