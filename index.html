@@ -49,21 +49,20 @@
         /* Ultra Smooth Glowing Character */
         #player {
             position: absolute;
-            bottom: 40px; /* Floor height */
+            bottom: 40px; 
             left: 80px;
             width: 42px;
             height: 52px;
             background: linear-gradient(45deg, #00ffff, #0066ff);
             border-radius: 8px;
             box-shadow: 0 0 20px #00ffff;
-            /* Remove inline css transitions to avoid physics stutter */
         }
 
         /* High-Definition Fireball Obstacle */
         #obstacle {
             position: absolute;
             bottom: 40px;
-            left: 850px; /* Hidden initially off-screen right */
+            left: 850px; 
             width: 36px;
             height: 36px;
             background: radial-gradient(circle, #ffea00 10%, #ff4500 50%, #b30000 100%);
@@ -89,6 +88,21 @@
 
         #scoreBox { color: #00ffff; }
         #highScoreBox { color: #ffea00; }
+
+        /* --- DEVELOPER CREDIT WATERMARK --- */
+        .dev-credit {
+            position: absolute;
+            bottom: 8px;
+            right: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            z-index: 6;
+            text-shadow: 0 0 8px #ff4500, 0 0 3px #000;
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+        }
 
         /* Menu & Game Over Cards */
         .screen-overlay {
@@ -180,6 +194,7 @@
         <h1>FIRE ESCAPE 🔥</h1>
         <p>Press <b>UP ARROW (↑)</b>, <b>SPACEBAR</b> or tap screen to jump and dodge the roaring fireballs!</p>
         <button class="btn" onclick="startGame()">START GAME 🕹️</button>
+        <div style="margin-top: 25px; color:#ffea00; font-size:12px; font-weight:bold; letter-spacing:1px;">DEVELOPED BY: ALI ASGHAR</div>
     </div>
 
     <!-- 2. Smooth Game Frame Window -->
@@ -193,11 +208,15 @@
         <div id="obstacle"></div>
         <div id="floor"></div>
 
+        <!-- Dynamic Credit Watermark on Live Game Floor -->
+        <div class="dev-credit">Created by Ali Asghar</div>
+
         <!-- Game Over UI Card -->
         <div id="gameOverScreen" class="screen-overlay">
             <h1>YOU GOT ROASTED! 💀</h1>
             <p style="margin-top:10px; font-size:20px; color:#fff;">Final Score: <span id="finalScore" style="color:#ffea00; font-weight:900;">0</span></p>
             <button class="btn" onclick="restartGame()" style="margin-top: 20px;">TRY AGAIN 🔄</button>
+            <div style="margin-top: 25px; color:#rgba(255,255,255,0.4); font-size:12px;">Game designed by Ali Asghar</div>
         </div>
     </div>
 
@@ -227,17 +246,17 @@
         let currentSpeed = baseSpeed;
 
         // Player Real-time Physics Properties
-        const floorY = 40; // Pixels from bottom boundary
+        const floorY = 40; 
         let playerY = floorY;
         let velocityY = 0;
-        const gravityValue = 0.6; // Heavy smooth fall force
-        const jumpForce = 13;     // High responsive jump force
+        const gravityValue = 0.6; 
+        const jumpForce = 13;     
         let isGrounded = true;
 
         // Event Listeners for Multi-control Support (Arrow Up + Space)
         document.addEventListener('keydown', function(event) {
             if (event.key === 'ArrowUp' || event.key === ' ' || event.code === 'Space') {
-                event.preventDefault(); // Stop webpage scrolling
+                event.preventDefault(); 
                 triggerJump();
             }
         });
@@ -269,27 +288,23 @@
             player.style.bottom = playerY + 'px';
             obstacle.style.left = obstacleX + 'px';
 
-            // Audio track toggling safely
             dieMusic.pause();
             dieMusic.currentTime = 0;
             bgMusic.currentTime = 0;
-            bgMusic.play().catch(e => console.log("Audio trigger waiting for user interaction context"));
+            bgMusic.play().catch(e => console.log("Audio waiting context"));
 
-            // RequestAnimationFrame for ultra-smooth 60fps refresh rates
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = requestAnimationFrame(gameLoopUpdate);
         }
 
-        // Main 60FPS Game Execution Loop 
         function gameLoopUpdate() {
             if (isGameOver) return;
 
             // 1. Apply Physics Math to Player Movement
             if (!isGrounded) {
-                velocityY -= gravityValue; // pull down
-                playerY += velocityY;      // apply velocity vector
+                velocityY -= gravityValue; 
+                playerY += velocityY;      
 
-                // Floor boundary validation check
                 if (playerY <= floorY) {
                     playerY = floorY;
                     velocityY = 0;
@@ -300,38 +315,32 @@
 
             // 2. Obstacle Translation Linear Movement
             obstacleX -= currentSpeed;
-            // Screen boundaries check
             if (obstacleX < -50) {
-                obstacleX = 850; // Reset off-screen right
+                obstacleX = 850; 
                 score += 10;
                 scoreDisplay.innerText = score;
 
-                // Scale difficulty speed smoothly every 20 points
                 if (score % 20 === 0 && currentSpeed < 16) {
                     currentSpeed += 0.8;
                 }
             }
             obstacle.style.left = obstacleX + 'px';
 
-            // 3. High Precision Collision Check Collision Matrix
-            // Player Box Coordinates
+            // 3. Collision Matrix Check
             let pLeft = 80;
-            let pRight = 122; // left + width
+            let pRight = 122; 
             let pBottom = playerY;
-            let pTop = playerY + 52; // bottom + height
+            let pTop = playerY + 52; 
 
-            // Obstacle Box Coordinates
             let oLeft = obstacleX;
-            let oRight = obstacleX + 36; // position + width
-            let oTop = floorY + 36;      // floor baseline height + fireball height
+            let oRight = obstacleX + 36; 
+            let oTop = floorY + 36;      
 
-            // Overlap verification logic
             if (oLeft < pRight && oRight > pLeft && pBottom < oTop) {
                 triggerGameOver();
                 return;
             }
 
-            // Loop to next vertical sync frame smoothly
             animationFrameId = requestAnimationFrame(gameLoopUpdate);
         }
 
@@ -339,11 +348,9 @@
             isGameOver = true;
             cancelAnimationFrame(animationFrameId);
 
-            // Audio Swap 
             bgMusic.pause();
-            dieMusic.play().catch(e => console.log("Audio trigger context issue"));
+            dieMusic.play().catch(e => console.log("Audio context trigger"));
 
-            // Score evaluation
             if (score > highScore) {
                 highScore = score;
                 highScoreDisplay.innerText = highScore;
