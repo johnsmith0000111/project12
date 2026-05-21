@@ -136,6 +136,9 @@
 </head>
 <body>
 
+    <!-- Targetted the exact .mp3.mp3 name you have -->
+    <audio id="roastSound" src="roast.mp3.mp3" preload="auto"></audio>
+
     <div class="container" id="mainCard">
         <!-- Input Section -->
         <div id="inputSection">
@@ -156,11 +159,17 @@
             const mainCard = document.getElementById('mainCard');
             const inputSection = document.getElementById('inputSection');
             const roastSection = document.getElementById('roastSection');
+            const sound = document.getElementById('roastSound');
             
             if (nameInput === "") {
                 alert("Abay naam to likh pehle! 😂");
                 return;
             }
+
+            // Play the roast sound instantly
+            sound.play().catch(error => {
+                console.log("Audio play blocked by browser settings:", error);
+            });
 
             // 1. Full Red-Black Danger Background
             document.body.style.background = "linear-gradient(135deg, #0f0000, #4a0000, #000000)";
@@ -171,7 +180,7 @@
             // 3. Hide Input
             inputSection.style.display = "none";
             
-            // 4. Exact dynamic message check
+            // 4. Exact dynamic message layout
             roastSection.innerHTML = `FUCK YOU <span class="name-highlight">${nameInput}</span>`;
             roastSection.style.display = "block";
 
