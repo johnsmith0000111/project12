@@ -3,205 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Ultimate Roast Machine 😂</title>
+    <title>Fire Escape: The Ultimate Run! 🔥🏃‍♂️</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial Black', Gadget, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
 
         body {
-            background: linear-gradient(135deg, #111, #333);
+            background: #0f0c20;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            transition: background 0.3s ease;
         }
 
-        /* Intense screen shake animation */
-        @keyframes intense-shake {
-            0% { transform: translate(2px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-2deg); }
-            20% { transform: translate(-3px, 0px) rotate(3deg); }
-            30% { transform: translate(0px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(2deg); }
-            50% { transform: translate(-1px, 2px) rotate(-3deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(2px, 1px) rotate(-2deg); }
-            80% { transform: translate(-1px, -1px) rotate(4deg); }
-            90% { transform: translate(2px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        /* Game Window Boarder and Glow */
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background: linear-gradient(to bottom, #1a0c2e, #4a154b);
+            border: 4px solid #ff4500;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
+            overflow: hidden;
+            display: none; /* Controlled via Menu */
         }
 
-        .container {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            text-align: center;
-            max-width: 450px;
-            width: 90%;
+        /* Neon Floor */
+        #floor {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to top, #111, #333);
+            border-top: 3px solid #00ffff;
+            box-shadow: 0 -5px 15px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Player Character with running aura */
+        #player {
+            position: absolute;
+            bottom: 40px;
+            left: 80px;
+            width: 40px;
+            height: 50px;
+            background: linear-gradient(45deg, #00ffff, #0088ff);
+            border-radius: 6px;
+            box-shadow: 0 0 15px #00ffff;
+            transition: bottom 0.05s linear;
+        }
+
+        /* Fireball Obstacle with heavy flame glow */
+        #obstacle {
+            position: absolute;
+            bottom: 40px;
+            right: -50px;
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle, #ffea00 20%, #ff4500 60%, #cc0000 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 25px #ff4500, 0 0 10px #ffea00;
+        }
+
+        /* Real-time UI HUD */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 5;
+        }
+
+        #scoreBox { color: #00ffff; }
+        #highScoreBox { color: #ffea00; }
+
+        /* Beautiful Start/Gameover Overlay Card */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 400px;
+            background: rgba(15, 12, 32, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
             z-index: 10;
         }
 
-        h2 {
-            color: #fff;
-            margin-bottom: 25px;
-            font-size: 22px;
-            font-weight: normal;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .input-group {
-            margin-bottom: 25px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            font-size: 18px;
-            color: #fff;
-            outline: none;
-            transition: all 0.3s ease;
+        /* Main Menu Wrapper outside game container for initial load */
+        #mainMenu {
+            width: 450px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        input[type="text"]:focus {
-            border-color: #ff3333;
-            background: rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 20px rgba(255, 51, 51, 0.6);
+        h1 {
+            color: #fff;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #ff4500;
         }
 
-        button {
-            background: linear-gradient(45deg, #ff0055, #ff5500);
+        p {
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff4500, #ff8c00);
             color: white;
             border: none;
-            padding: 16px 40px;
-            font-size: 16px;
+            padding: 14px 40px;
+            font-size: 18px;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(255, 0, 85, 0.4);
+            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.4);
             transition: all 0.2s ease;
-            text-transform: uppercase;
         }
 
-        button:hover {
+        .btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(255, 0, 85, 0.7);
+            box-shadow: 0 8px 25px rgba(255, 69, 0, 0.6);
         }
 
-        /* The dynamic roast text style */
-        .roast-text {
-            font-size: 42px;
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.2;
-            text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        #gameOverScreen {
             display: none;
-            text-transform: uppercase;
-            word-wrap: break-word;
+            background: rgba(250, 0, 0, 0.2);
         }
 
-        .name-highlight {
-            color: #ffea00;
-            display: block;
-            font-size: 50px;
-            margin-top: 10px;
-            text-shadow: 0 0 20px rgba(255, 234, 0, 0.6);
+        #gameOverScreen h1 {
+            color: #ff3333;
+            font-size: 45px;
+            text-shadow: 0 0 20px #000;
+            animation: pulse 1s infinite alternate;
         }
 
-        .emoji-rain {
-            position: absolute;
-            font-size: 30px;
-            animation: fall 2.5s linear infinite;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        @keyframes fall {
-            0% { transform: translateY(-10vh) rotate(0deg); }
-            100% { transform: translateY(110vh) rotate(360deg); }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
         }
     </style>
 </head>
 <body>
 
-    <!-- Targetted the exact .mp3.mp3 name you have -->
-    <audio id="roastSound" src="roast.mp3.mp3" preload="auto"></audio>
+    <!-- Audio Elements Setup -->
+    <audio id="bgMusic" src="mk.mp3" loop preload="auto"></audio>
+    <audio id="dieMusic" src="aag.mp3" preload="auto"></audio>
 
-    <div class="container" id="mainCard">
-        <!-- Input Section -->
-        <div id="inputSection">
-            <h2>Enter your name to see magic ✨</h2>
-            <div class="input-group">
-                <input type="text" id="userName" placeholder="Your Name..." autocomplete="off">
-            </div>
-            <button onclick="revealRoast()">Submit</button>
+    <!-- 1. Initial Beautiful Main Menu -->
+    <div id="mainMenu">
+        <h1>FIRE ESCAPE 🔥</h1>
+        <p>Press SPACEBAR or Click Jump to dodge the burning fireballs!</p>
+        <button class="btn" onclick="startGame()">START GAME 🕹️</button>
+    </div>
+
+    <!-- 2. Main Active Game Screen Wrapper -->
+    <div id="gameContainer" onclick="jump()">
+        <div id="hud">
+            <div id="scoreBox">SCORE: <span id="score">0</span></div>
+            <div id="highScoreBox">HI-SCORE: <span id="highScore">0</span></div>
         </div>
 
-        <!-- Roast Section -->
-        <div id="roastSection" class="roast-text"></div>
+        <div id="player"></div>
+        <div id="obstacle"></div>
+        <div id="floor"></div>
+
+        <!-- Dynamic Game Over Screen Inside Canvas Context -->
+        <div id="gameOverScreen" class="screen-overlay">
+            <h1>YOU GOT BURNED! 💀</h1>
+            <p style="margin-top:10px; font-size:18px; color:#fff;">Final Score: <span id="finalScore" style="color:#ffea00; font-weight:bold;">0</span></p>
+            <button class="btn" onclick="restartGame()" style="margin-top: 15px;">TRY AGAIN 🔄</button>
+        </div>
     </div>
 
     <script>
-        function revealRoast() {
-            const nameInput = document.getElementById('userName').value.trim();
-            const mainCard = document.getElementById('mainCard');
-            const inputSection = document.getElementById('inputSection');
-            const roastSection = document.getElementById('roastSection');
-            const sound = document.getElementById('roastSound');
+        const gameContainer = document.getElementById('gameContainer');
+        const mainMenu = document.getElementById('mainMenu');
+        const player = document.getElementById('player');
+        const obstacle = document.getElementById('obstacle');
+        const scoreDisplay = document.getElementById('score');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const highScoreDisplay = document.getElementById('highScore');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+
+        // Audio Objects
+        const bgMusic = document.getElementById('bgMusic');
+        const dieMusic = document.getElementById('dieMusic');
+
+        // Game Variables
+        let isJumping = false;
+        let score = 0;
+        let highScore = 0;
+        let gameInterval;
+        let obstaclePosition = 800;
+        let obstacleSpeed = 6;
+        let isGameOver = false;
+
+        // Player physics parameters
+        let playerY = 40; // baseline height from bottom
+        let gravity = 3;
+
+        // Keyboard Event Listener for Controls
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' || event.key === ' ') {
+                event.preventDefault(); // page scroll hone se rokne k liye
+                jump();
+            }
+        });
+
+        function startGame() {
+            mainMenu.style.display = 'none';
+            gameContainer.style.display = 'block';
+            resetGameSystem();
+        }
+
+        function jump() {
+            if (isJumping || isGameOver) return;
+            isJumping = true;
             
-            if (nameInput === "") {
-                alert("Abay naam to likh pehle! 😂");
-                return;
+            let jumpCount = 0;
+            // Jump Upward Arc Animation loop
+            let jumpInterval = setInterval(() => {
+                if (jumpCount >= 20) {
+                    clearInterval(jumpInterval);
+                    // Fall downward loop
+                    let fallInterval = setInterval(() => {
+                        if (jumpCount <= 0) {
+                            clearInterval(fallInterval);
+                            playerY = 40;
+                            player.style.bottom = playerY + 'px';
+                            isJumping = false;
+                        } else {
+                            playerY -= 6;
+                            player.style.bottom = playerY + 'px';
+                            jumpCount--;
+                        }
+                    }, 12);
+                } else {
+                    playerY += 7;
+                    player.style.bottom = playerY + 'px';
+                    jumpCount++;
+                }
+            }, 12);
+        }
+
+        function resetGameSystem() {
+            score = 0;
+            obstacleSpeed = 6;
+            obstaclePosition = 800;
+            isGameOver = false;
+            scoreDisplay.innerText = score;
+            gameOverScreen.style.display = 'none';
+            obstacle.style.right = '-50px';
+            
+            // Music handling safely inside user click sequence
+            dieMusic.pause();
+            dieMusic.currentTime = 0;
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(e => console.log("Audio waiting context trigger"));
+
+            // Core Physics Engine Loop
+            gameInterval = setInterval(updateGameFrame, 10);
+        }
+
+        function updateGameFrame() {
+            // 1. Move Obstacle towards Left
+            obstaclePosition -= obstacleSpeed;
+            obstacle.style.left = obstaclePosition + 'px';
+
+            // 2. Reset obstacle position when it goes past left boundary and count score
+            if (obstaclePosition < -40) {
+                obstaclePosition = 800;
+                score += 10;
+                scoreDisplay.innerText = score;
+                
+                // Increase speed slowly every 30 points to add difficulty progression
+                if (score % 30 === 0 && obstacleSpeed < 15) {
+                    obstacleSpeed += 1;
+                }
             }
 
-            // Play the roast sound instantly
-            sound.play().catch(error => {
-                console.log("Audio play blocked by browser settings:", error);
-            });
+            // 3. Precise Box Collision Detection Matrix
+            // Player Bounds
+            let pLeft = 80;
+            let pRight = 120; // 80 + 40 width
+            let pBottom = playerY;
+            let pTop = playerY + 50; // Y + height
 
-            // 1. Full Red-Black Danger Background
-            document.body.style.background = "linear-gradient(135deg, #0f0000, #4a0000, #000000)";
-            
-            // 2. Shake the whole card intensely
-            mainCard.style.animation = "intense-shake 0.15s infinite";
-            
-            // 3. Hide Input
-            inputSection.style.display = "none";
-            
-            // 4. Exact dynamic message layout
-            roastSection.innerHTML = `FUCK YOU <span class="name-highlight">${nameInput}</span>`;
-            roastSection.style.display = "block";
+            // Obstacle Bounds
+            let oLeft = obstaclePosition;
+            let oRight = obstaclePosition + 35; // Position + width
+            let oTop = 40 + 35; // bottom line + diameter
 
-            // 5. Blast of middle finger and laughing emojis
-            for (let i = 0; i < 40; i++) {
-                setTimeout(createEmoji, i * 50);
+            if (oLeft < pRight && oRight > pLeft && pBottom < oTop) {
+                endGameProcess();
             }
         }
 
-        function createEmoji() {
-            const emojis = ['🖕', '😂', '💀', '🔥', '🖕'];
-            const emoji = document.createElement('div');
-            emoji.classList.add('emoji-rain');
-            emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-            emoji.style.left = Math.random() * 100 + 'vw';
-            emoji.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
-            document.body.appendChild(emoji);
+        function endGameProcess() {
+            isGameOver = true;
+            clearInterval(gameInterval);
+            
+            // Audio Flip
+            bgMusic.pause();
+            dieMusic.play().catch(e => console.log("Audio waiting context trigger"));
 
-            setTimeout(() => {
-                emoji.remove();
-            }, 2500);
+            // High score validation check
+            if (score > highScore) {
+                highScore = score;
+                highScoreDisplay.innerText = highScore;
+            }
+
+            finalScoreDisplay.innerText = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function restartGame() {
+            resetGameSystem();
         }
     </script>
 </body>
